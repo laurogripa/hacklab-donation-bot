@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import axios from "axios"
 import { savePhotoData } from "../../../../services/photoService"
+import { checkImageForNSFW } from "../../../../services/nsfwCheckService"
+import { detectObjectsInImage } from "../../../../services/objectDetectionService"
 
 // Use the bot token from environment variables
 const TELEGRAM_TOKEN = process.env.BOT_TOKEN || ""
@@ -63,23 +65,84 @@ export async function POST(request: NextRequest) {
         // Get the photo URL
         const photoUrl = await getPhotoFromTelegram(largestPhoto.file_id)
 
-        // Store the photo information in MongoDB
+        // Check if the image contains NSFW content
+        const nsfwCheckResult = await checkImageForNSFW(photoUrl)
+
+        if (nsfwCheckResult.isNSFW) {
+          // Reject the photo if it contains NSFW content
+          await sendTelegramMessage(
+            chatId,
+            "Sorry, we cannot accept this image as it appears to contain inappropriate content."
+          )
+
+          console.log(
+            `Rejected NSFW image from ${username}, score: ${nsfwCheckResult.score}`
+          )
+
+          return NextResponse.json({
+            status: "rejected",
+            message: "Image contains NSFW content",
+          })
+        }
+
+        // Extract SFW score from the NSFW check result
+        // If the API result had an 'sfw' class, use that, otherwise calculate it as 1 - nsfw score
+        const sfwScore =
+          nsfwCheckResult.sfwScore !== undefined
+            ? nsfwCheckResult.sfwScore
+            : nsfwCheckResult.score !== undefined
+            ? 1 - nsfwCheckResult.score
+            : undefined
+
+        // Perform object detection on the image
+        const objectDetectionResult = await detectObjectsInImage(photoUrl)
+
+        // Get list of detected objects
+        const detectedObjects = objectDetectionResult.objects
+
+        // Log detected objects
+        if (detectedObjects.length > 0) {
+          console.log(
+            `Detected ${detectedObjects.length} objects in image from ${username}`
+          )
+        } else {
+          console.log(`No objects detected in image from ${username}`)
+        }
+
+        // Only store the photo if it passes the NSFW check
         await savePhotoData({
           username,
           photoUrl,
           chatId,
           timestamp: new Date(),
+          sfwScore,
+          detectedObjects,
         })
 
-        // For now, we'll just acknowledge receipt
-        await sendTelegramMessage(
-          chatId,
-          `Received your photo! It's been saved to our database.`
-        )
+        // Acknowledge receipt with info about detected objects
+        let responseMessage = `Thank you for your donation photo! It's been approved and added to our gallery.`
+
+        // Add information about detected objects if any were found
+        if (detectedObjects.length > 0) {
+          const objectsList = detectedObjects
+            .slice(0, 3) // Limit to top 3 objects to avoid very long messages
+            .map((obj) => `${obj.name} (${Math.round(obj.confidence * 100)}%)`)
+            .join(", ")
+
+          responseMessage += `\n\nObjects detected: ${objectsList}`
+
+          // If there are more objects than we listed
+          if (detectedObjects.length > 3) {
+            responseMessage += ` and ${detectedObjects.length - 3} more`
+          }
+        }
+
+        await sendTelegramMessage(chatId, responseMessage)
 
         return NextResponse.json({
           status: "success",
-          message: "Photo received and processed",
+          message: "Photo received, checked, and processed",
+          objectsDetected: detectedObjects.length,
         })
       } catch (error) {
         console.error("Error processing photo:", error)

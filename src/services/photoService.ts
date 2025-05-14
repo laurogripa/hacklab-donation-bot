@@ -1,10 +1,17 @@
 import clientPromise from "../lib/mongodb"
 
+interface DetectedObject {
+  name: string
+  confidence: number
+}
+
 interface PhotoData {
   username: string
   photoUrl: string
   timestamp: Date
   chatId: number
+  sfwScore?: number | undefined
+  detectedObjects?: DetectedObject[]
 }
 
 export async function savePhotoData(data: PhotoData) {
@@ -18,6 +25,8 @@ export async function savePhotoData(data: PhotoData) {
       photoUrl: data.photoUrl,
       chatId: data.chatId,
       timestamp: data.timestamp,
+      sfwScore: data.sfwScore ?? null,
+      detectedObjects: data.detectedObjects || [],
     })
 
     return result
