@@ -3,6 +3,7 @@ import axios from "axios"
 import { savePhotoData } from "../../../../services/photoService"
 import { checkImageForNSFW } from "../../../../services/nsfwCheckService"
 import { detectObjectsInImage } from "../../../../services/objectDetectionService"
+import { recognizeBrandsInImage } from "../../../../services/brandRecognitionService"
 
 // Use the bot token from environment variables
 const TELEGRAM_TOKEN = process.env.BOT_TOKEN || ""
@@ -94,22 +95,35 @@ export async function POST(request: NextRequest) {
             ? 1 - nsfwCheckResult.score
             : undefined
 
-        // Perform object detection on the image
-        const objectDetectionResult = await detectObjectsInImage(photoUrl)
+        // Run object detection and brand recognition in parallel to save time
+        const [objectDetectionResult, brandRecognitionResult] =
+          await Promise.all([
+            detectObjectsInImage(photoUrl),
+            recognizeBrandsInImage(photoUrl),
+          ])
 
         // Get list of detected objects
         const detectedObjects = objectDetectionResult.objects
 
-        // Log detected objects
+        // Get list of recognized brands
+        const recognizedBrands = brandRecognitionResult.brands
+
+        // Log detected objects and brands
         if (detectedObjects.length > 0) {
           console.log(
             `Detected ${detectedObjects.length} objects in image from ${username}`
           )
-        } else {
-          console.log(`No objects detected in image from ${username}`)
         }
 
-        // Only store the photo if it passes the NSFW check
+        if (recognizedBrands.length > 0) {
+          console.log(
+            `Recognized ${
+              recognizedBrands.length
+            } brands in image from ${username}: ${recognizedBrands.join(", ")}`
+          )
+        }
+
+        // Store the photo if it passes the NSFW check
         await savePhotoData({
           username,
           photoUrl,
@@ -117,9 +131,10 @@ export async function POST(request: NextRequest) {
           timestamp: new Date(),
           sfwScore,
           detectedObjects,
+          recognizedBrands,
         })
 
-        // Acknowledge receipt with info about detected objects
+        // Acknowledge receipt with info about detected objects and brands
         let responseMessage = `Thank you for your donation photo! It's been approved and added to our gallery.`
 
         // Add information about detected objects if any were found
@@ -137,12 +152,25 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Add information about recognized brands if any were found
+        if (recognizedBrands.length > 0) {
+          responseMessage += `\n\nBrands recognized: ${recognizedBrands
+            .slice(0, 3)
+            .join(", ")}`
+
+          // If there are more brands than we listed
+          if (recognizedBrands.length > 3) {
+            responseMessage += ` and ${recognizedBrands.length - 3} more`
+          }
+        }
+
         await sendTelegramMessage(chatId, responseMessage)
 
         return NextResponse.json({
           status: "success",
           message: "Photo received, checked, and processed",
           objectsDetected: detectedObjects.length,
+          brandsRecognized: recognizedBrands.length,
         })
       } catch (error) {
         console.error("Error processing photo:", error)

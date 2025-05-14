@@ -16,6 +16,7 @@ interface PhotoData {
   chatId: number
   sfwScore?: number
   detectedObjects?: DetectedObject[]
+  recognizedBrands?: string[]
 }
 
 export default function Home() {
@@ -117,32 +118,72 @@ export default function Home() {
                   {new Date(photo.timestamp).toLocaleString()}
                 </p>
 
-                {/* Display object tags if any were detected */}
-                {photo.detectedObjects && photo.detectedObjects.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-xs text-gray-500 mb-1">
-                      Detected objects:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {photo.detectedObjects.slice(0, 5).map((obj, index) => (
-                        <span
-                          key={index}
-                          className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
-                          title={`Confidence: ${Math.round(
-                            obj.confidence * 100
-                          )}%`}
-                        >
-                          {obj.name}
-                        </span>
-                      ))}
-                      {photo.detectedObjects.length > 5 && (
-                        <span className="text-xs text-gray-500">
-                          +{photo.detectedObjects.length - 5} more
-                        </span>
-                      )}
-                    </div>
+                {/* Objects section - always show */}
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 mb-1">
+                    Detected objects:
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {photo.detectedObjects &&
+                    photo.detectedObjects.length > 0 ? (
+                      <>
+                        {photo.detectedObjects.slice(0, 5).map((obj, index) => (
+                          <span
+                            key={index}
+                            className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded"
+                          >
+                            {obj.name}{" "}
+                            <span className="font-semibold">
+                              ({Math.round(obj.confidence * 100)}%)
+                            </span>
+                          </span>
+                        ))}
+                        {photo.detectedObjects.length > 5 && (
+                          <span className="text-xs text-gray-500">
+                            +{photo.detectedObjects.length - 5} more
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-500 italic">
+                        Not detected
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* Brands section - always show */}
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 mb-1">
+                    Recognized brands:
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {photo.recognizedBrands &&
+                    photo.recognizedBrands.length > 0 ? (
+                      <>
+                        {photo.recognizedBrands
+                          .slice(0, 5)
+                          .map((brand, index) => (
+                            <span
+                              key={index}
+                              className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded"
+                            >
+                              {brand}
+                            </span>
+                          ))}
+                        {photo.recognizedBrands.length > 5 && (
+                          <span className="text-xs text-gray-500">
+                            +{photo.recognizedBrands.length - 5} more
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-500 italic">
+                        Not detected
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ))}

@@ -12,6 +12,7 @@ interface PhotoData {
   chatId: number
   sfwScore?: number | undefined
   detectedObjects?: DetectedObject[]
+  recognizedBrands?: string[]
 }
 
 export async function savePhotoData(data: PhotoData) {
@@ -27,6 +28,7 @@ export async function savePhotoData(data: PhotoData) {
       timestamp: data.timestamp,
       sfwScore: data.sfwScore ?? null,
       detectedObjects: data.detectedObjects || [],
+      recognizedBrands: data.recognizedBrands || [],
     })
 
     return result
