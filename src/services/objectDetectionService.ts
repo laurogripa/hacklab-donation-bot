@@ -11,7 +11,7 @@ interface ObjectDetectionResult {
 }
 
 /**
- * Detects objects in an image using API4AI general detection API
+ * Detects objects in an image using RapidAPI general detection API
  * @param imageUrl URL of the image to analyze
  * @returns Object with array of detected objects and optional error
  */
@@ -19,29 +19,22 @@ export async function detectObjectsInImage(
   imageUrl: string
 ): Promise<ObjectDetectionResult> {
   try {
-    // API4AI demo API endpoint for general object detection
-    const API_URL = "https://demo.api4ai.cloud/general-det/v1/results"
+    // RapidAPI endpoint for general object detection
+    const API_URL = "https://general-detection.p.rapidapi.com/v1/results"
 
-    // Fetch the image from the URL
-    const imageResponse = await axios.get(imageUrl, {
-      responseType: "arraybuffer",
-    })
-    const imageBuffer = Buffer.from(imageResponse.data, "binary")
-
-    // Prepare form data with the image
-    const formData = new FormData()
-    const blob = new Blob([imageBuffer], {
-      type: imageResponse.headers["content-type"],
-    })
-    formData.append("image", blob)
-
-    // Make request to the object detection API
-    const response = await axios.post(API_URL, formData, {
-      headers: {
-        "A4A-CLIENT-APP-ID": "sample",
-        "Content-Type": "multipart/form-data",
-      },
-    })
+    // Make request to the object detection API using the URL parameter
+    const response = await axios.post(
+      `${API_URL}?algo=algo1`,
+      `url=${encodeURIComponent(imageUrl)}`,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-rapidapi-host": "general-detection.p.rapidapi.com",
+          "x-rapidapi-key":
+            "a77dfc9fe3msh2780dca01aaac20p10f67fjsn87b8b98f6e1c",
+        },
+      }
+    )
 
     // Parse the response
     if (response.data && response.data.results) {

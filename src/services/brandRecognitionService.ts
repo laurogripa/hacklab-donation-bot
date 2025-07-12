@@ -6,7 +6,7 @@ interface BrandRecognitionResult {
 }
 
 /**
- * Recognizes brands in an image using API4AI brand recognition API
+ * Recognizes brands in an image using RapidAPI brand recognition API
  * @param imageUrl URL of the image to analyze
  * @returns Object with array of recognized brands and optional error
  */
@@ -14,29 +14,22 @@ export async function recognizeBrandsInImage(
   imageUrl: string
 ): Promise<BrandRecognitionResult> {
   try {
-    // API4AI demo API endpoint for brand recognition
-    const API_URL = "https://demo.api4ai.cloud/brand-det/v2/results"
+    // RapidAPI endpoint for brand recognition
+    const API_URL = "https://brand-recognition.p.rapidapi.com/v2/results"
 
-    // Fetch the image from the URL
-    const imageResponse = await axios.get(imageUrl, {
-      responseType: "arraybuffer",
-    })
-    const imageBuffer = Buffer.from(imageResponse.data, "binary")
-
-    // Prepare form data with the image
-    const formData = new FormData()
-    const blob = new Blob([imageBuffer], {
-      type: imageResponse.headers["content-type"],
-    })
-    formData.append("image", blob)
-
-    // Make request to the brand recognition API
-    const response = await axios.post(API_URL, formData, {
-      headers: {
-        "A4A-CLIENT-APP-ID": "sample",
-        "Content-Type": "multipart/form-data",
-      },
-    })
+    // Make request to the brand recognition API using URL parameter
+    const response = await axios.post(
+      API_URL,
+      `url=${encodeURIComponent(imageUrl)}`,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-rapidapi-host": "brand-recognition.p.rapidapi.com",
+          "x-rapidapi-key":
+            "a77dfc9fe3msh2780dca01aaac20p10f67fjsn87b8b98f6e1c",
+        },
+      }
+    )
 
     // Parse the response
     if (response.data && response.data.results) {

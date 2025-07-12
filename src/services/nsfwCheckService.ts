@@ -8,7 +8,7 @@ interface NSFWCheckResult {
 }
 
 /**
- * Checks if an image URL contains NSFW content using API4AI demo API
+ * Checks if an image URL contains NSFW content using RapidAPI
  * @param imageUrl URL of the image to check
  * @returns Object with isNSFW flag and optional score/error
  */
@@ -16,29 +16,22 @@ export async function checkImageForNSFW(
   imageUrl: string
 ): Promise<NSFWCheckResult> {
   try {
-    // API4AI demo API endpoint for NSFW detection
-    const API_URL = "https://demo.api4ai.cloud/nsfw/v1/results"
+    // RapidAPI endpoint for NSFW detection
+    const API_URL = "https://nsfw3.p.rapidapi.com/v1/results"
 
-    // Fetch the image from the URL
-    const imageResponse = await axios.get(imageUrl, {
-      responseType: "arraybuffer",
-    })
-    const imageBuffer = Buffer.from(imageResponse.data, "binary")
-
-    // Prepare form data with the image
-    const formData = new FormData()
-    const blob = new Blob([imageBuffer], {
-      type: imageResponse.headers["content-type"],
-    })
-    formData.append("image", blob)
-
-    // Make request to the NSFW detection API
-    const response = await axios.post(API_URL, formData, {
-      headers: {
-        "A4A-CLIENT-APP-ID": "sample",
-        "Content-Type": "multipart/form-data",
-      },
-    })
+    // Make request to the NSFW detection API using URL parameter
+    const response = await axios.post(
+      API_URL,
+      `url=${encodeURIComponent(imageUrl)}`,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "x-rapidapi-host": "nsfw3.p.rapidapi.com",
+          "x-rapidapi-key":
+            "a77dfc9fe3msh2780dca01aaac20p10f67fjsn87b8b98f6e1c",
+        },
+      }
+    )
 
     // Parse the response
     if (response.data && response.data.results) {
