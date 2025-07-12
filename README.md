@@ -1,17 +1,13 @@
-# Telegram Bot Photo Receiver
+# Hacklab Donation Bot
 
-This is a Next.js project that includes an API endpoint to receive photos from a Telegram bot.
+This is a Hacklab Express project to handle donations on Telegram and display on the browser!
 
 ## Setup
 
 ### 1. Install Dependencies
 
 ```bash
-npm install
-# or
-yarn install
-# or
-bun install
+bun i
 ```
 
 ### 2. Create a Telegram Bot
@@ -25,7 +21,7 @@ bun install
 Create a `.env.local` file in the root directory with the following content:
 
 ```
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+BOT_TOKEN=your_telegram_bot_token_here
 ```
 
 Replace `your_telegram_bot_token_here` with the token you received from BotFather.
@@ -33,10 +29,6 @@ Replace `your_telegram_bot_token_here` with the token you received from BotFathe
 ### 4. Run the Development Server
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 bun dev
 ```
 
@@ -61,7 +53,7 @@ Replace `<YOUR_BOT_TOKEN>` with your bot token and `<YOUR_NGROK_URL>` with the H
 1. Start a chat with your bot on Telegram
 2. Send a photo to the bot
 3. The bot will reply with a confirmation message
-4. The photo information will be logged in your server console
+4. The photo information will be logged in your server console and displayed on the frontend
 
 ## API Endpoints
 
